@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rhesatsaqif23/diro-reservation-app/backend/internal/config"
 	"github.com/rhesatsaqif23/diro-reservation-app/backend/internal/infrastructure/security"
-	"github.com/rhesatsaqif23/diro-reservation-app/backend/internal/usecase/auth"
+	auth "github.com/rhesatsaqif23/diro-reservation-app/backend/internal/usecase"
 	"github.com/rhesatsaqif23/diro-reservation-app/backend/pkg/response"
 )
 

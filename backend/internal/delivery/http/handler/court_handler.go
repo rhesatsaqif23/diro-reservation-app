@@ -1,0 +1,35 @@
+package handler
+
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/rhesatsaqif23/diro-reservation-app/backend/internal/usecase"
+	"github.com/rhesatsaqif23/diro-reservation-app/backend/pkg/response"
+)
+
+// CourtHandler handles HTTP requests for courts
+type CourtHandler struct {
+	usecase *usecase.CourtUsecase
+}
+
+func NewCourtHandler(u *usecase.CourtUsecase) *CourtHandler {
+	return &CourtHandler{usecase: u}
+}
+
+// GET /courts
+func (h *CourtHandler) GetAll(c *gin.Context) {
+	isActive := true
+	courtType := c.Query("type")
+	var typePtr *string
+
+	if courtType != "" {
+		typePtr = &courtType
+	}
+
+	courts, err := h.usecase.GetAllCourts(&isActive, typePtr)
+	if err != nil {
+		response.InternalServerError(c, err.Error())
+		return
+	}
+
+	response.OK(c, "Courts fetched successfully", courts)
+}
