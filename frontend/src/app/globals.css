@@ -1,0 +1,55 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&display=swap");
+
+@import "tailwindcss";
+
+@theme {
+  /* Brand Colors */
+  --color-primary: #137fec;
+  --color-primary-hover: #0f6fd4;
+  --color-primary-soft: #e8f2fe;
+
+  /* Theme Variables Default (Light) */
+  --color-background-page: #f6f7f8;
+  --color-text-base: #0f172a;
+  --color-border-subtle: #e2e8f0;
+
+  /* Font Configuration */
+  --font-display: "Manrope", ui-sans-serif, system-ui;
+
+  /* Border Radius */
+  --radius-card: 12px;
+  --radius-btn: 10px;
+}
+
+/* Dark Theme Overrides */
+@custom-variant dark (&:where(.dark, .dark *));
+
+.dark {
+  --color-background-page: #101922;
+  --color-text-base: #f1f5f9;
+  --color-border-subtle: #1e293b;
+}
+
+@layer base {
+  *,
+  ::after,
+  ::before {
+    @apply border-border-subtle transition-colors duration-300;
+  }
+
+  body {
+    background-color: var(--color-background-page);
+    color: var(--color-text-base);
+    @apply font-display antialiased;
+  }
+}
+
+@layer utilities {
+  .container-page {
+    @apply mx-auto max-w-7xl px-6 lg:px-20;
+  }
+  .nav-link {
+    @apply text-sm font-medium text-slate-600 dark:text-slate-300
+           hover:text-primary dark:hover:text-primary transition-colors;
+  }
+}
