@@ -8,8 +8,11 @@
   --color-primary-hover: #0f6fd4;
   --color-primary-soft: #e8f2fe;
 
+  --color-background-light: #f6f7f8;
+  --color-background-dark: #101922;
+
   /* Theme Variables Default (Light) */
-  --color-background-page: #f6f7f8;
+  --color-background-page: var(--color-background-light);
   --color-text-base: #0f172a;
   --color-border-subtle: #e2e8f0;
 
@@ -25,7 +28,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 .dark {
-  --color-background-page: #101922;
+  --color-background-page: var(--color-background-dark);
   --color-text-base: #f1f5f9;
   --color-border-subtle: #1e293b;
 }

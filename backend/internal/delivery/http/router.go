@@ -49,6 +49,7 @@ func NewRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	authUsecase := usecase.NewUsecase(db)
 	availabilityUsecase := usecase.NewAvailabilityUsecase(availabilityRepo)
 	reservationUsecase := usecase.NewReservationUsecase(reservationRepo)
+	bookingUsecase := usecase.NewBookingUsecase()
 
 	// Handlers
 	classHandler := handler.NewClassHandler(classUsecase)
@@ -56,6 +57,7 @@ func NewRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	authHandler := handler.NewAuthHandler(authUsecase, cfg)
 	availabilityHandler := handler.NewAvailabilityHandler(availabilityUsecase)
 	reservationHandler := handler.NewReservationHandler(reservationUsecase)
+	bookingHandler := handler.NewBookingHandler(bookingUsecase)
 
 	// ROUTES
 	v1 := router.Group("/v1")
@@ -72,21 +74,22 @@ func NewRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 		v1.GET("/classes/:id", classHandler.GetByID)
 		v1.GET("/courts", courtHandler.GetAll)
 		v1.GET("/courts/:id/availability", availabilityHandler.GetCourtAvailability)
+		v1.GET("/booking/dates", bookingHandler.GetAvailableDates)
 
 		// Protected
-		protected := v1.Group("")
+		protected := v1.Group("/")
 		protected.Use(middleware.JWTAuth(cfg.JWT.Secret))
 		{
 			protected.GET("/profile", func(c *gin.Context) {
-				userID, _ := c.Get("user_id")
-				email, _ := c.Get("email")
+				userID := c.GetString("user_id")
+				email := c.GetString("email")
 
 				response.OK(c, "Profile fetched", gin.H{
 					"user_id": userID,
 					"email":   email,
 				})
 			})
-			
+
 			protected.POST("/reservations", reservationHandler.CreateReservation)
 			protected.GET("/reservations/me", reservationHandler.GetBookingHistory)
 		}

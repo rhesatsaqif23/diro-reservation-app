@@ -1,6 +1,7 @@
 import React from "react";
 import { MapPin } from "lucide-react";
 import Button from "../ui/Button";
+import Link from "next/link";
 
 export default function HeroSection() {
   return (
@@ -37,9 +38,11 @@ export default function HeroSection() {
           </div>
 
           <div className="flex flex-col gap-4 sm:flex-row">
-            <Button variant="primary" size="lg">
-              Book a Class Now
-            </Button>
+            <Link href="/classes">
+              <Button variant="primary" size="lg">
+                Book a Class Now
+              </Button>
+            </Link>
 
             <Button variant="outline" size="lg">
               View Pricing

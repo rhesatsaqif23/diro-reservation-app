@@ -3,38 +3,51 @@
 import { useEffect, useState } from "react";
 import { Sun, Moon } from "lucide-react";
 
-function getInitialTheme(): boolean {
-  if (typeof window === "undefined") return false;
-
-  const stored = localStorage.getItem("theme");
-  if (stored === "dark") return true;
-  if (stored === "light") return false;
-
-  return window.matchMedia("(prefers-color-scheme: dark)").matches;
-}
-
 export default function ThemeToggle() {
-  const [isDark, setIsDark] = useState(getInitialTheme);
+  const [mounted, setMounted] = useState(false);
+  const [isDark, setIsDark] = useState(false);
 
-  // Sync DOM + localStorage when state changes
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", isDark);
-    localStorage.setItem("theme", isDark ? "dark" : "light");
-  }, [isDark]);
+    const savedTheme = localStorage.getItem("theme");
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)",
+    ).matches;
+    const shouldBeDark = savedTheme === "dark" || (!savedTheme && prefersDark);
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsDark(shouldBeDark);
+    setMounted(true);
+
+    if (shouldBeDark) {
+      document.documentElement.classList.add("dark");
+    }
+  }, []);
+
+  // Fungsi toggle diletakkan langsung di onClick
+  const handleToggle = () => {
+    setIsDark((prev) => {
+      const newState = !prev;
+      if (newState) {
+        document.documentElement.classList.add("dark");
+        localStorage.setItem("theme", "dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+        localStorage.setItem("theme", "light");
+      }
+      return newState;
+    });
+  };
+
+  // Render placeholder transparan agar Navbar tidak lompat (Layout Shift)
+  if (!mounted) return <div className="h-10 w-16" />;
 
   return (
     <button
-      onClick={() => setIsDark((prev) => !prev)}
+      onClick={handleToggle}
       aria-label="Toggle theme"
-      className="
-        relative flex h-10 w-16 items-center
-        rounded-full border border-border-subtle
-        bg-slate-200 dark:bg-slate-700
-        transition-colors duration-300
-      "
+      className="relative flex h-10 w-16 items-center rounded-full border border-slate-200 dark:border-slate-800 bg-slate-200 dark:bg-slate-700 transition-colors duration-300"
     >
-      {/* Thumb */}
-      <span
+      <div
         className={`
           absolute left-1 top-1 flex h-8 w-8 items-center justify-center
           rounded-full bg-white dark:bg-slate-900
@@ -44,7 +57,7 @@ export default function ThemeToggle() {
         `}
       >
         {isDark ? <Moon size={16} /> : <Sun size={16} />}
-      </span>
+      </div>
     </button>
   );
 }

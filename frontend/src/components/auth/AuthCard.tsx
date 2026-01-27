@@ -5,42 +5,85 @@ import { Mail, Lock, User } from "lucide-react";
 import AuthToggle from "./AuthToggle";
 import AuthTextField from "./AuthTextField";
 import Button from "../ui/Button";
+import { useAuthStore } from "@/src/store/auth.store";
+import { login, register } from "@/src/services/auth.service";
 
 interface AuthCardProps {
   open: boolean;
   onClose: () => void;
 }
 
+// Helper untuk extract error message secara aman
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  return "Something went wrong";
+}
+
 export default function AuthCard({ open, onClose }: AuthCardProps) {
+  // mode form
   const [mode, setMode] = useState<"login" | "register">("login");
 
+  // form state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
 
+  // global auth store (zustand)
+  const { login: setAuth } = useAuthStore();
+
+  function resetForm() {
+    setEmail("");
+    setPassword("");
+    setName("");
+    setMode("login");
+  }
+
+  // lock scroll ketika modal aktif
   useEffect(() => {
-    if (open) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    document.body.style.overflow = open ? "hidden" : "";
 
     return () => {
       document.body.style.overflow = "";
     };
   }, [open]);
 
+  // submit handler
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+
+    try {
+      if (mode === "login") {
+        const res = await login(email, password);
+        setAuth(res.access_token);
+      } else {
+        await register(name, email, password);
+        const res = await login(email, password);
+        setAuth(res.access_token);
+      }
+
+      onClose();
+      resetForm();
+    } catch (error: unknown) {
+      alert(getErrorMessage(error));
+    }
+  }
+
+  // modal close → unmount
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* overlay */}
+      {/* Overlay */}
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={() => {
+          resetForm();
+          onClose();
+        }}
       />
 
-      {/* card */}
+      {/* Auth Card */}
       <div className="relative w-full max-w-120 rounded-xl bg-white dark:bg-[#1c2136] border border-slate-200 dark:border-slate-800 p-8 shadow-xl">
         {/* Header */}
         <div className="mb-8 text-center">
@@ -60,7 +103,7 @@ export default function AuthCard({ open, onClose }: AuthCardProps) {
         </div>
 
         {/* Form */}
-        <form className="flex flex-col gap-5">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           {mode === "register" && (
             <AuthTextField
               label="Full Name"
@@ -89,7 +132,9 @@ export default function AuthCard({ open, onClose }: AuthCardProps) {
             onChange={setPassword}
           />
 
-          <Button>{mode === "login" ? "Sign In" : "Create Account"}</Button>
+          <Button type="submit">
+            {mode === "login" ? "Sign In" : "Create Account"}
+          </Button>
         </form>
 
         {/* Footer */}
