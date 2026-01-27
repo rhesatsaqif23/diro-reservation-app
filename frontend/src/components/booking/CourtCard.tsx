@@ -15,20 +15,19 @@ export function CourtCard({
   selected = false,
   onClick,
 }: CourtCardProps) {
-  const isAvailable = court.is_active;
+  const isAvailable = court.is_available;
 
   return (
     <button
       type="button"
-      disabled={!court.is_active}
+      disabled={!isAvailable}
       onClick={onClick}
       className={clsx(
         "relative flex w-full items-center gap-5 p-5 rounded-2xl text-left transition-colors",
         "bg-white dark:bg-[#1a1d2d]",
         "border-2",
         selected ? "border-primary" : "border-slate-200 hover:border-primary",
-        !court.is_active &&
-          "opacity-60 cursor-not-allowed hover:border-slate-200",
+        !isAvailable && "opacity-60 cursor-not-allowed hover:border-slate-200",
       )}
     >
       {/* Icon */}
@@ -53,7 +52,7 @@ export function CourtCard({
       <div className="flex flex-1 items-start justify-between">
         <div className="flex flex-col">
           <p className="text-lg font-bold">{court.name}</p>
-          <p className="text-sm text-slate-500">Reformer</p>
+          <p className="text-sm text-slate-500">{court.type}</p>
 
           {selected && (
             <p className="text-sm text-primary font-bold mt-2">Selected</p>

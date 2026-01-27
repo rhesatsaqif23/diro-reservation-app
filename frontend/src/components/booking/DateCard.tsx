@@ -9,13 +9,7 @@ interface DateCardProps {
   onSelect?: (date: string) => void;
 }
 
-export function DateCard({
-  date,
-  label,
-  disabled,
-  active,
-  onSelect,
-}: DateCardProps) {
+export function DateCard({ date, disabled, active, onSelect }: DateCardProps) {
   const d = new Date(date);
   return (
     <button

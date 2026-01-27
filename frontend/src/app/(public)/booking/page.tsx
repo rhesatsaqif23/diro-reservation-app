@@ -14,91 +14,147 @@ import { BookingSummaryCard } from "@/src/components/booking/BookingSummary";
 
 import { ClassService } from "@/src/services/class.service";
 import { BookingService } from "@/src/services/booking.service";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/src/store/auth.store";
+import { CourtService } from "@/src/services/court.service";
 
 export default function BookingPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const classId = searchParams.get("classId");
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
+  // DATA
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
-
   const [dates, setDates] = useState<string[]>([]);
   const [timeslots, setTimeslots] = useState<TimeslotAvailability[]>([]);
   const [courts, setCourts] = useState<Court[]>([]);
 
+  // SELECTION (SINGLE SOURCE OF TRUTH)
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTimeslot, setSelectedTimeslot] =
     useState<TimeslotAvailability | null>(null);
   const [selectedCourt, setSelectedCourt] = useState<Court | null>(null);
 
-  const [loading, setLoading] = useState(false);
+  // LOADING STATE (PER SECTION)
+  const [loadingDates, setLoadingDates] = useState(true);
+  const [loadingTimeslots, setLoadingTimeslots] = useState(true);
+  const [loadingCourts, setLoadingCourts] = useState(true);
 
-  // fetch class
+  const requiredCourtType = selectedClass?.required_court_type;
+
+  // FETCH CLASS
   useEffect(() => {
     if (!classId) return;
-
     ClassService.getByID(classId).then(setSelectedClass);
   }, [classId]);
 
-  // fetch available dates
+  // FETCH DATES (INIT)
   useEffect(() => {
     if (!classId) return;
 
-    BookingService.getAvailableDates(classId).then((res) => {
-      setDates(res.data);
-    });
+    let cancelled = false;
+
+    (async () => {
+      setLoadingDates(true);
+      try {
+        const res = await BookingService.getAvailableDates(classId);
+        if (!cancelled) {
+          setDates(res.data);
+          setSelectedDate(res.data[0] ?? null);
+        }
+      } finally {
+        if (!cancelled) setLoadingDates(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [classId]);
 
-  // fetch timeslots
+  // FETCH TIMESLOTS (BASED ON selectedDate)
   useEffect(() => {
     if (!classId || !selectedDate) return;
 
-    const fetchTimeslots = async () => {
-      setLoading(true);
+    let cancelled = false;
+
+    (async () => {
+      setLoadingTimeslots(true);
+      setSelectedTimeslot(null);
+      setCourts([]);
+
       try {
         const res = await BookingService.getAvailableTimeslots(
           classId,
           selectedDate,
         );
-        setTimeslots(res.data);
+        if (!cancelled) {
+          setTimeslots(res.data);
+          setSelectedTimeslot(res.data[0] ?? null);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoadingTimeslots(false);
       }
-    };
+    })();
 
-    fetchTimeslots();
+    return () => {
+      cancelled = true;
+    };
   }, [classId, selectedDate]);
 
-  // fetch courts
+  // FETCH COURTS (BASED ON selectedDate + selectedTimeslot)
   useEffect(() => {
-    if (!classId || !selectedDate || !selectedTimeslot) return;
+    if (!selectedDate || !selectedTimeslot || !requiredCourtType) return;
 
-    const fetchCourts = async () => {
-      setLoading(true);
+    let cancelled = false;
+
+    (async () => {
+      setLoadingCourts(true);
       try {
-        const res = await BookingService.getAvailableCourts(
-          classId,
+        const res = await CourtService.getWithAvailability(
           selectedDate,
           selectedTimeslot.start_time,
+          requiredCourtType,
         );
-        setCourts(res.data);
+
+        if (!cancelled) {
+          setCourts(res);
+          setSelectedCourt(null);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoadingCourts(false);
       }
+    })();
+
+    return () => {
+      cancelled = true;
     };
+  }, [selectedDate, selectedTimeslot, requiredCourtType]);
 
-    fetchCourts();
-  }, [classId, selectedDate, selectedTimeslot]);
+  // CONFIRM
+  const handleConfirmBooking = async () => {
+    if (!isAuthenticated) {
+      alert("Silakan login terlebih dahulu");
+      return;
+    }
 
-  const handleConfirmBooking = () => {
     if (!classId || !selectedDate || !selectedTimeslot || !selectedCourt)
       return;
 
-    console.log("CONFIRM BOOKING", {
-      class_id: classId,
-      court_id: selectedCourt.id,
-      date: selectedDate,
-      start_time: selectedTimeslot.start_time,
-    });
+    try {
+      const res = await BookingService.createDraft({
+        class_id: classId,
+        court_id: selectedCourt.id,
+        date: selectedDate,
+        start_time: selectedTimeslot.start_time,
+      });
+
+      router.push(`/booking/summary/${res.data.reservation_id}`);
+    } catch (err) {
+      console.error(err);
+      alert("Gagal membuat booking. Silakan coba lagi.");
+    }
   };
 
   const dateOptions = dates.map((date) => ({
@@ -115,28 +171,27 @@ export default function BookingPage() {
       <SelectDate
         dates={dateOptions}
         selected={selectedDate}
+        loading={loadingDates}
         onChange={(date) => {
           setSelectedDate(date);
-          setSelectedTimeslot(null);
           setSelectedCourt(null);
-          setTimeslots([]);
-          setCourts([]);
         }}
       />
 
       <SelectTimeslot
         timeslots={timeslots}
         selected={selectedTimeslot}
+        loading={loadingTimeslots}
         onChange={(slot) => {
           setSelectedTimeslot(slot);
           setSelectedCourt(null);
-          setCourts([]);
         }}
       />
 
       <SelectCourt
         courts={courts}
         selected={selectedCourt}
+        loading={loadingCourts}
         onChange={setSelectedCourt}
       />
 
@@ -150,6 +205,7 @@ export default function BookingPage() {
             : undefined
         }
         onConfirm={handleConfirmBooking}
+        isAuthenticated={isAuthenticated}
       />
     </section>
   );

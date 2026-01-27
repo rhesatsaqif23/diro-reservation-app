@@ -12,28 +12,24 @@ interface ApiResponse<T> {
 }
 
 export const ClassService = {
-  // GET /v1/classes
   getAll: async (): Promise<Class[]> => {
     const res = await axios.get<ApiResponse<ClassResponseDTO[]>>(
       `${API_BASE}/v1/classes`,
     );
 
-    return res.data.data.map(
-      (item): Class => ({
-        id: item.ID,
-        name: item.Name,
-        duration_minutes: item.DurationMinutes,
-        price: item.Price,
-        description: item.Description,
-        required_court_type: item.RequiredCourtType,
-        image_url: item.ImageURL,
-        is_active: item.IsActive,
-        created_at: item.CreatedAt,
-      }),
-    );
+    return res.data.data.map((item) => ({
+      id: item.ID,
+      name: item.Name,
+      duration_minutes: item.DurationMinutes,
+      price: item.Price,
+      description: item.Description,
+      required_court_type: item.RequiredCourtType,
+      image_url: item.ImageURL,
+      is_active: item.IsActive,
+      created_at: item.CreatedAt,
+    }));
   },
 
-  // GET /v1/classes/:id
   getByID: async (id: string): Promise<Class> => {
     const res = await axios.get<ApiResponse<ClassResponseDTO>>(
       `${API_BASE}/v1/classes/${id}`,

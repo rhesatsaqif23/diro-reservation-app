@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -10,10 +11,12 @@ import (
 	"github.com/rhesatsaqif23/diro-reservation-app/backend/internal/domain/repository"
 )
 
-// Reservation business logic
+var ErrSlotAlreadyReserved = errors.New("slot already reserved")
+
 type ReservationUsecase interface {
 	CreateReservation(userID string, req dto.CreateReservationRequest) (*model.Reservation, error)
 	GetBookingHistory(userID string) ([]model.Reservation, error)
+	GetByIDWithPreload(id string, userID string) (*model.Reservation, error)
 }
 
 type reservationUsecase struct {
@@ -24,7 +27,6 @@ func NewReservationUsecase(repo repository.ReservationRepository) ReservationUse
 	return &reservationUsecase{repo: repo}
 }
 
-// Create new reservation
 func (u *reservationUsecase) CreateReservation(
 	userID string,
 	req dto.CreateReservationRequest,
@@ -35,7 +37,6 @@ func (u *reservationUsecase) CreateReservation(
 		return nil, err
 	}
 
-	// Check availability
 	isReserved, err := u.repo.IsSlotReserved(req.CourtID, date, req.StartTime)
 	if err != nil {
 		return nil, err
@@ -61,7 +62,23 @@ func (u *reservationUsecase) CreateReservation(
 	return u.repo.FindByIDWithPreload(reservation.ID)
 }
 
-// Booking history
 func (u *reservationUsecase) GetBookingHistory(userID string) ([]model.Reservation, error) {
 	return u.repo.FindByUserID(userID)
+}
+
+func (u *reservationUsecase) GetByIDWithPreload(
+	id string,
+	userID string,
+) (*model.Reservation, error) {
+
+	res, err := u.repo.FindByIDWithPreload(id)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.UserID != userID {
+		return nil, errors.New("forbidden")
+	}
+
+	return res, nil
 }

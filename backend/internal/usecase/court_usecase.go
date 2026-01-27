@@ -18,3 +18,11 @@ func NewCourtUsecase(repo repository.CourtRepository) *CourtUsecase {
 func (u *CourtUsecase) GetAllCourts(isActive *bool, courtType *string) ([]model.Court, error) {
 	return u.repo.FindAll(isActive, courtType)
 }
+
+func (u *CourtUsecase) GetWithAvailability(
+	date string,
+	startTime string,
+	courtType *string,
+) ([]model.CourtAvailability, error) {
+	return u.repo.FindWithAvailability(date, startTime, courtType)
+}

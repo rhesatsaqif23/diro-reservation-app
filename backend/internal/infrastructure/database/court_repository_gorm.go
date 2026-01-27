@@ -29,3 +29,42 @@ func (r *CourtRepositoryGorm) FindAll(isActive *bool, courtType *string) ([]mode
 	err := query.Order("created_at ASC").Find(&courts).Error
 	return courts, err
 }
+
+func (r *CourtRepositoryGorm) FindWithAvailability(
+	date string,
+	startTime string,
+	requiredCourtType *string,
+) ([]model.CourtAvailability, error) {
+
+	var courts []model.CourtAvailability
+
+	query := `
+		SELECT
+			c.id,
+			c.name,
+			c.type,
+			CASE
+				WHEN r.id IS NULL THEN true
+				ELSE false
+			END AS is_available
+		FROM courts c
+		LEFT JOIN reservations r
+			ON r.court_id = c.id
+			AND r.date = ?
+			AND r.start_time = ?
+			AND r.status IN ('PENDING', 'PAID')
+		WHERE c.is_active = true
+	`
+
+	args := []interface{}{date, startTime}
+
+	if requiredCourtType != nil {
+		query += " AND c.type = ?"
+		args = append(args, *requiredCourtType)
+	}
+
+	query += " ORDER BY c.created_at ASC"
+
+	err := r.db.Raw(query, args...).Scan(&courts).Error
+	return courts, err
+}

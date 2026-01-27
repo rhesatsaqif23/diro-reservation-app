@@ -1,26 +1,32 @@
 package usecase
 
-import "time"
+import (
+	"time"
+
+	"github.com/rhesatsaqif23/diro-reservation-app/backend/internal/domain/model"
+)
 
 type BookingUsecase interface {
 	GetAvailableDates() []string
-}
 
-type bookingUsecase struct{}
+	GetAvailableTimeslots(
+		classID string,
+		date time.Time,
+	) ([]model.TimeslotAvailability, error)
 
-func NewBookingUsecase() BookingUsecase {
-	return &bookingUsecase{}
-}
+	GetAvailableCourts(
+		classID string,
+		date time.Time,
+		startTime string,
+	) ([]model.Court, error)
 
-func (u *bookingUsecase) GetAvailableDates() []string {
-	today := time.Now()
-	daysAhead := 7
+	CreateDraft(
+		userID string,
+		classID string,
+		courtID string,
+		date time.Time,
+		startTime string,
+	) (*model.Reservation, error)
 
-	var dates []string
-	for i := 0; i < daysAhead; i++ {
-		d := today.AddDate(0, 0, i)
-		dates = append(dates, d.Format("2006-01-02"))
-	}
-
-	return dates
+	GetSummary(id string) (*model.Reservation, error)
 }

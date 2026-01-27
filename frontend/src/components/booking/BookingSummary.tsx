@@ -11,6 +11,7 @@ interface BookingSummaryCardProps {
   court: Court | null;
   amount?: string;
   onConfirm?: () => void;
+  isAuthenticated: boolean;
 }
 
 export function BookingSummaryCard({
@@ -19,6 +20,7 @@ export function BookingSummaryCard({
   court,
   amount,
   onConfirm,
+  isAuthenticated,
 }: BookingSummaryCardProps) {
   if (!date || !timeslot || !court) return null; // hide if incomplete
 
@@ -61,7 +63,7 @@ export function BookingSummaryCard({
           {/* Court */}
           <div className="flex items-center gap-2 text-primary">
             <MapPin className="w-4 h-4" />
-            <p className="text-lg font-bold">{court.name} - Reformer 1</p>
+            <p className="text-lg font-bold">{court.name}</p>
           </div>
         </div>
       </div>
@@ -76,10 +78,11 @@ export function BookingSummaryCard({
         </div>
 
         <button
+          disabled={!isAuthenticated}
           onClick={onConfirm}
-          className="flex items-center justify-center gap-2 px-10 h-14 bg-primary hover:bg-primary/90 rounded-2xl text-white font-bold transition-transform active:scale-95 shadow-xl shadow-primary/30"
+          className="flex items-center justify-center gap-2 px-10 h-14 bg-primary hover:bg-primary/90 rounded-2xl text-white font-bold transition-transform active:scale-95 shadow-xl shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Confirm Booking
+          {isAuthenticated ? "Confirm Booking" : "Login to Continue"}
           <ArrowRight className="w-5 h-5" />
         </button>
       </div>

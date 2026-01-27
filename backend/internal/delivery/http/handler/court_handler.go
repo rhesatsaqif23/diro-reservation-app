@@ -33,3 +33,27 @@ func (h *CourtHandler) GetAll(c *gin.Context) {
 
 	response.OK(c, "Courts fetched successfully", courts)
 }
+
+func (h *CourtHandler) GetWithAvailability(c *gin.Context) {
+	date := c.Query("date")
+	startTime := c.Query("start_time")
+	courtType := c.Query("type")
+
+	if date == "" || startTime == "" {
+		response.BadRequest(c, "date and start_time are required", nil)
+		return
+	}
+
+	var typePtr *string
+	if courtType != "" {
+		typePtr = &courtType
+	}
+
+	courts, err := h.usecase.GetWithAvailability(date, startTime, typePtr)
+	if err != nil {
+		response.InternalServerError(c, err.Error())
+		return
+	}
+
+	response.OK(c, "Courts availability fetched", courts)
+}

@@ -1,14 +1,14 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useAuthStore } from "@/src/store/auth.store";
 
-// Mencegah akses halaman jika user belum login
 export const useAuthGuard = () => {
   const router = useRouter();
+  const token = useAuthStore((s) => s.token);
 
   useEffect(() => {
-    const token = localStorage.getItem("token"); // token JWT di localStorage
     if (!token) {
-      router.replace("/login"); // redirect ke login
+      router.replace("/login");
     }
-  }, [router]);
+  }, [token, router]);
 };

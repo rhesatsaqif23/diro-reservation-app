@@ -54,3 +54,21 @@ func (h *ReservationHandler) GetBookingHistory(c *gin.Context) {
 
 	response.OK(c, "Booking history fetched", data)
 }
+
+// GET /v1/booking/summary/:id
+func (h *ReservationHandler) GetByIDWithPreload(c *gin.Context) {
+	id := c.Param("id")
+	userID := c.GetString("user_id")
+
+	res, err := h.usecase.GetByIDWithPreload(id, userID)
+	if err != nil {
+		if err.Error() == "forbidden" {
+			response.Error(c, http.StatusForbidden, "access denied", nil)
+			return
+		}
+		response.Error(c, http.StatusNotFound, err.Error(), nil)
+		return
+	}
+
+	response.OK(c, "Booking summary fetched", res)
+}

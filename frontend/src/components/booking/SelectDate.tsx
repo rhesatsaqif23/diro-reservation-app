@@ -9,10 +9,16 @@ interface SelectDateProps {
     disabled?: boolean;
   }[];
   selected: string | null;
+  loading?: boolean;
   onChange: (date: string | null) => void;
 }
 
-export function SelectDate({ dates, selected, onChange }: SelectDateProps) {
+export function SelectDate({
+  dates,
+  selected,
+  loading = false,
+  onChange,
+}: SelectDateProps) {
   const handleSelect = (date: string) => {
     onChange(selected === date ? null : date);
   };
@@ -27,18 +33,27 @@ export function SelectDate({ dates, selected, onChange }: SelectDateProps) {
         <h3 className="text-xl font-bold">Select Date</h3>
       </div>
 
-      {/* Dates */}
+      {/* Content */}
       <div className="flex gap-3 px-4 py-2 overflow-x-auto no-scrollbar">
-        {dates.map((d) => (
-          <DateCard
-            key={d.date}
-            date={d.date}
-            label={d.label}
-            disabled={d.disabled}
-            active={selected === d.date}
-            onSelect={handleSelect}
-          />
-        ))}
+        {loading &&
+          Array.from({ length: 3 }).map((_, i) => (
+            <div
+              key={i}
+              className="w-32 h-16 rounded-xl bg-slate-200 animate-pulse"
+            />
+          ))}
+
+        {!loading &&
+          dates.map((d) => (
+            <DateCard
+              key={d.date}
+              date={d.date}
+              label={d.label}
+              disabled={d.disabled}
+              active={selected === d.date}
+              onSelect={handleSelect}
+            />
+          ))}
       </div>
     </section>
   );

@@ -49,7 +49,12 @@ func NewRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	authUsecase := usecase.NewUsecase(db)
 	availabilityUsecase := usecase.NewAvailabilityUsecase(availabilityRepo)
 	reservationUsecase := usecase.NewReservationUsecase(reservationRepo)
-	bookingUsecase := usecase.NewBookingUsecase()
+	bookingUsecase := usecase.NewBookingUsecase(
+		classRepo,
+		courtRepo,
+		availabilityRepo,
+		reservationRepo,
+	)
 
 	// Handlers
 	classHandler := handler.NewClassHandler(classUsecase)
@@ -72,9 +77,13 @@ func NewRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 		// Public
 		v1.GET("/classes", classHandler.GetAll)
 		v1.GET("/classes/:id", classHandler.GetByID)
+
+		v1.GET("/courts/availability", courtHandler.GetWithAvailability)
 		v1.GET("/courts", courtHandler.GetAll)
 		v1.GET("/courts/:id/availability", availabilityHandler.GetCourtAvailability)
+
 		v1.GET("/booking/dates", bookingHandler.GetAvailableDates)
+		v1.GET("/booking/timeslots", bookingHandler.GetAvailableTimeslots)
 
 		// Protected
 		protected := v1.Group("/")
@@ -90,8 +99,18 @@ func NewRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 				})
 			})
 
+			// RESERVATION
 			protected.POST("/reservations", reservationHandler.CreateReservation)
 			protected.GET("/reservations/me", reservationHandler.GetBookingHistory)
+
+			// BOOKING DRAFT
+			protected.POST("/booking/draft", bookingHandler.CreateDraft)
+
+			// SUMMARY PAGE DATA
+			protected.GET(
+				"/booking/summary/:id",
+				bookingHandler.GetSummary,
+			)
 		}
 	}
 

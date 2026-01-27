@@ -5,7 +5,6 @@ import { Mail, Lock, User } from "lucide-react";
 import AuthToggle from "./AuthToggle";
 import AuthTextField from "./AuthTextField";
 import Button from "../ui/Button";
-import { useAuthStore } from "@/src/store/auth.store";
 import { login, register } from "@/src/services/auth.service";
 
 interface AuthCardProps {
@@ -29,9 +28,6 @@ export default function AuthCard({ open, onClose }: AuthCardProps) {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
 
-  // global auth store (zustand)
-  const { login: setAuth } = useAuthStore();
-
   function resetForm() {
     setEmail("");
     setPassword("");
@@ -54,12 +50,10 @@ export default function AuthCard({ open, onClose }: AuthCardProps) {
 
     try {
       if (mode === "login") {
-        const res = await login(email, password);
-        setAuth(res.access_token);
+        await login(email, password);
       } else {
         await register(name, email, password);
-        const res = await login(email, password);
-        setAuth(res.access_token);
+        await login(email, password);
       }
 
       onClose();

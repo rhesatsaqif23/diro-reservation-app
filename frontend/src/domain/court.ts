@@ -3,5 +3,6 @@ export interface Court {
   name: string;
   type?: string | null;
   is_active: boolean;
+  is_available: boolean;
   created_at: string;
 }

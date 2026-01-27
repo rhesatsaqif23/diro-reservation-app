@@ -9,11 +9,15 @@ import AuthCard from "../auth/AuthCard";
 import Link from "next/link";
 import { useAuthStore } from "@/src/store/auth.store";
 import { logout as apiLogout } from "@/src/services/auth.service";
+import { useMounted } from "@/src/hooks/useMounted";
 
 export default function Navbar() {
+  const mounted = useMounted();
   const { isAuthenticated, logout } = useAuthStore();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  if (!mounted) return null;
 
   const handleLogout = () => {
     apiLogout();
@@ -85,7 +89,6 @@ export default function Navbar() {
               >
                 Explore Class
               </Link>
-
               <Link
                 href="/bookings"
                 className="text-base font-medium text-slate-900 dark:text-white"
@@ -93,21 +96,21 @@ export default function Navbar() {
               >
                 Booking History
               </Link>
-
               <div className="pt-2">
                 <ThemeToggle />
               </div>
-
               {isAuthenticated ? (
-                <Button variant="outline" onClick={handleLogout}>
+                <Button
+                  variant="outline"
+                  className="rounded-full"
+                  onClick={handleLogout}
+                >
                   Logout
                 </Button>
               ) : (
                 <Button
-                  onClick={() => {
-                    setIsAuthOpen(true);
-                    setIsMobileOpen(false);
-                  }}
+                  className="rounded-full"
+                  onClick={() => setIsAuthOpen(true)}
                 >
                   Login
                 </Button>
