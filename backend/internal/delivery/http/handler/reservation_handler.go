@@ -44,11 +44,7 @@ func (h *ReservationHandler) GetBookingHistory(c *gin.Context) {
 
 	data, err := h.usecase.GetBookingHistory(userID)
 	if err != nil {
-		if err == usecase.ErrSlotAlreadyReserved {
-			response.Error(c, http.StatusConflict, err.Error(), nil)
-			return
-		}
-		response.Error(c, http.StatusInternalServerError, err.Error(), nil)
+		response.Error(c, 500, err.Error(), nil)
 		return
 	}
 

@@ -15,12 +15,10 @@ type PaymentHandler struct {
 	paymentUsecase *usecase.PaymentUsecase
 }
 
-// Create new payment handler
 func NewPaymentHandler(paymentUsecase *usecase.PaymentUsecase) *PaymentHandler {
 	return &PaymentHandler{paymentUsecase: paymentUsecase}
 }
 
-// Generate Midtrans Snap token for reservation payment
 // POST /v1/payment/token
 func (h *PaymentHandler) CreateSnapToken(c *gin.Context) {
 	var req struct {
@@ -29,32 +27,36 @@ func (h *PaymentHandler) CreateSnapToken(c *gin.Context) {
 		Name          string `json:"name" binding:"required"`
 	}
 
-	// Validate request body
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "Invalid request body", nil)
 		return
 	}
 
-	// Fetch reservation with required relations
+	// === FETCH RESERVATION ===
 	reservation, err := h.paymentUsecase.ReservationRepo.
 		FindByIDWithPreload(req.ReservationID)
+
 	if err != nil || reservation == nil {
 		response.Error(c, 404, "Reservation not found", nil)
 		return
 	}
 
-	// Ensure reservation class and price are valid
-	if reservation.Class.ID == "" || reservation.Class.Price <= 0 {
-		response.Error(c, 500, "Invalid reservation data", nil)
+	// === CRITICAL VALIDATION ===
+	if reservation.Class.ID == "" {
+		response.Error(c, 500, "Reservation class not loaded", nil)
 		return
 	}
 
-	// Calculate payment amount and admin fee
+	if reservation.Class.Price <= 0 {
+		response.Error(c, 500, "Invalid reservation price", nil)
+		return
+	}
+
+	// === CALCULATE PRICE ===
 	amount := reservation.Class.Price
 	adminFee := int(float64(amount) * 0.05)
 	total := amount + adminFee
 
-	// Define transaction items
 	items := []midtrans.ItemDetails{
 		{
 			ID:    reservation.ID,
@@ -70,7 +72,6 @@ func (h *PaymentHandler) CreateSnapToken(c *gin.Context) {
 		},
 	}
 
-	// Build snap transaction request
 	reqSnap := &snap.Request{
 		TransactionDetails: midtrans.TransactionDetails{
 			OrderID:  "RES-" + reservation.ID,
@@ -83,14 +84,16 @@ func (h *PaymentHandler) CreateSnapToken(c *gin.Context) {
 		Items: &items,
 	}
 
-	// Request snap token to Midtrans
-	resp, err := h.paymentUsecase.Snap.CreateTransaction(reqSnap)
-	if err != nil || resp == nil || resp.Token == "" {
-		response.Error(c, 500, "Failed to generate payment token", nil)
+	// === MIDTRANS CALL ===
+	resp, midtransErr := h.paymentUsecase.Snap.CreateTransaction(reqSnap)
+
+	if resp == nil || resp.Token == "" {
+		_ = midtransErr
+		response.Error(c, 500, "Failed to create snap transaction", nil)
 		return
 	}
 
-	// Return snap token to client
+	// === SUCCESS ===
 	response.OK(c, "Snap token generated", gin.H{
 		"token":     resp.Token,
 		"total":     total,
@@ -98,66 +101,43 @@ func (h *PaymentHandler) CreateSnapToken(c *gin.Context) {
 	})
 }
 
-// Handle Midtrans payment notification
 // POST /v1/payment/notification
 func (h *PaymentHandler) HandleNotification(c *gin.Context) {
 	var notif map[string]interface{}
 
-	// Parse notification payload
 	if err := c.ShouldBindJSON(&notif); err != nil {
 		c.JSON(400, gin.H{"error": "invalid payload"})
 		return
 	}
 
-	// Extract required notification fields
+	// SAFE PARSING
 	transactionStatus, ok1 := notif["transaction_status"].(string)
 	orderID, ok2 := notif["order_id"].(string)
+
 	if !ok1 || !ok2 {
 		c.JSON(400, gin.H{"error": "invalid notification structure"})
 		return
 	}
 
-	fraudStatus, _ := notif["fraud_status"].(string)
 	reservationID := strings.TrimPrefix(orderID, "RES-")
 
-	// Fetch related reservation
-	reservation, err := h.paymentUsecase.ReservationRepo.
-		FindByIDWithPreload(reservationID)
-	if err != nil || reservation == nil {
-		c.JSON(200, gin.H{"status": "ignored"})
-		return
-	}
+	var err error
 
-	// Ignore notification if reservation already paid
-	if reservation.Status == "PAID" {
-		c.JSON(200, gin.H{"status": "ignored"})
-		return
-	}
-
-	// Handle transaction status
 	switch transactionStatus {
-
-	case "capture":
-		if fraudStatus == "accept" {
-			err = h.paymentUsecase.MarkReservationPaid(reservationID)
-		}
-
-	case "settlement":
+	case "capture", "settlement":
 		err = h.paymentUsecase.MarkReservationPaid(reservationID)
 
 	case "expire":
-		err = h.paymentUsecase.MarkReservationCancelled(reservationID)
+		err = h.paymentUsecase.MarkReservationExpired(reservationID)
 
-	default:
-		// Unhandled status
+	case "cancel", "deny":
+		err = h.paymentUsecase.MarkReservationCancelled(reservationID)
 	}
 
-	// Handle update failure
 	if err != nil {
 		c.JSON(500, gin.H{"error": "failed to update reservation"})
 		return
 	}
 
-	// Acknowledge notification
 	c.JSON(200, gin.H{"status": "ok"})
 }

@@ -13,20 +13,35 @@ import (
 
 var ErrSlotAlreadyReserved = errors.New("slot already reserved")
 
+// Interface
 type ReservationUsecase interface {
-	CreateReservation(userID string, req dto.CreateReservationRequest) (*model.Reservation, error)
-	GetBookingHistory(userID string) ([]model.Reservation, error)
-	GetByIDWithPreload(id string, userID string) (*model.Reservation, error)
+	CreateReservation(
+		userID string,
+		req dto.CreateReservationRequest,
+	) (*model.Reservation, error)
+
+	GetBookingHistory(
+		userID string,
+	) ([]dto.ReservationHistoryResponse, error)
+
+	GetByIDWithPreload(
+		id string,
+		userID string,
+	) (*model.Reservation, error)
 }
 
+// Implementation
 type reservationUsecase struct {
 	repo repository.ReservationRepository
 }
 
-func NewReservationUsecase(repo repository.ReservationRepository) ReservationUsecase {
+func NewReservationUsecase(
+	repo repository.ReservationRepository,
+) ReservationUsecase {
 	return &reservationUsecase{repo: repo}
 }
 
+/* CREATE */
 func (u *reservationUsecase) CreateReservation(
 	userID string,
 	req dto.CreateReservationRequest,
@@ -37,10 +52,15 @@ func (u *reservationUsecase) CreateReservation(
 		return nil, err
 	}
 
-	isReserved, err := u.repo.IsSlotReserved(req.CourtID, date, req.StartTime)
+	isReserved, err := u.repo.IsSlotReserved(
+		req.CourtID,
+		date,
+		req.StartTime,
+	)
 	if err != nil {
 		return nil, err
 	}
+
 	if isReserved {
 		return nil, ErrSlotAlreadyReserved
 	}
@@ -62,10 +82,62 @@ func (u *reservationUsecase) CreateReservation(
 	return u.repo.FindByIDWithPreload(reservation.ID)
 }
 
-func (u *reservationUsecase) GetBookingHistory(userID string) ([]model.Reservation, error) {
-	return u.repo.FindByUserID(userID)
+/* HISTORY */
+func (u *reservationUsecase) GetBookingHistory(
+	userID string,
+) ([]dto.ReservationHistoryResponse, error) {
+
+	reservations, err := u.repo.FindByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]dto.ReservationHistoryResponse, 0, len(reservations))
+
+	for _, r := range reservations {
+		item := dto.ReservationHistoryResponse{
+			ID:        r.ID,
+			Status:    string(r.Status),
+			Date:      r.Date.Format("2006-01-02"),
+			StartTime: r.StartTime,
+		}
+
+		/* CLASS (optional & safe) */
+		if r.Class.ID != "" {
+			image := ""
+			if r.Class.ImageURL != nil {
+				image = *r.Class.ImageURL
+			}
+
+			item.Class = &struct {
+				ID       string `json:"id"`
+				Name     string `json:"name"`
+				Price    int    `json:"price"`
+				ImageURL string `json:"image_url"`
+			}{
+				ID:       r.Class.ID,
+				Name:     r.Class.Name,
+				Price:    r.Class.Price,
+				ImageURL: image,
+			}
+		}
+
+		/* COURT (optional & safe) */
+		if r.Court.ID != "" {
+			item.Court = &struct {
+				Name string `json:"name"`
+			}{
+				Name: r.Court.Name,
+			}
+		}
+
+		result = append(result, item)
+	}
+
+	return result, nil
 }
 
+/* DETAIL */
 func (u *reservationUsecase) GetByIDWithPreload(
 	id string,
 	userID string,

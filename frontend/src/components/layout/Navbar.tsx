@@ -30,14 +30,14 @@ export default function Navbar() {
       <header className="fixed top-0 left-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-background-light dark:bg-background-dark">
         <div className="container-page flex items-center justify-between py-4">
           {/* Logo */}
-          <div className="flex items-center gap-3 group">
+          <Link href="/" className="flex items-center gap-3 group">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white transition-transform group-hover:scale-105">
               <MdSelfImprovement size={24} />
             </div>
             <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
               ZenPilates
             </h2>
-          </div>
+          </Link>
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-8">
@@ -45,7 +45,7 @@ export default function Navbar() {
               Explore Class
             </Link>
 
-            <Link href="/bookings" className="nav-link">
+            <Link href="/history" className="nav-link">
               Booking History
             </Link>
 

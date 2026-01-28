@@ -1,5 +1,6 @@
 import React from "react";
 import Button from "../ui/Button";
+import Link from "next/link";
 
 export default function CTASection() {
   return (
@@ -19,9 +20,11 @@ export default function CTASection() {
               body&#39;s strength and your mind&#39;s peace.
             </p>
           </div>
-          <Button variant="secondary" size="lg">
-            Book Your First Class
-          </Button>
+          <Link href="/classes">
+            <Button variant="secondary" size="lg">
+              Book Your First Class
+            </Button>
+          </Link>
         </div>
       </div>
     </section>

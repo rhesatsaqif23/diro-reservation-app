@@ -1,3 +1,4 @@
+import { ReservationHistory } from "../domain/reservationHistory";
 import { apiFetch } from "../lib/api";
 import { getToken } from "../lib/auth";
 
@@ -17,8 +18,23 @@ export function createReservation(payload: {
 }
 
 export class ReservationService {
+  /** HISTORY */
+  static async getMyReservations(): Promise<ReservationHistory[]> {
+    const res = await apiFetch<{
+      success: boolean;
+      data: ReservationHistory[];
+    }>("/reservations/me", {
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
+    });
+
+    return res.data;
+  }
+
+  /** SUMMARY */
   static async getSummary(id: string) {
-    return apiFetch<{
+    const res = await apiFetch<{
       success: boolean;
       data: {
         id: string;
@@ -36,6 +52,8 @@ export class ReservationService {
       headers: {
         Authorization: `Bearer ${getToken()}`,
       },
-    }).then((res) => res.data);
+    });
+
+    return res.data;
   }
 }
