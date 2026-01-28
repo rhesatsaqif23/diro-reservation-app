@@ -15,3 +15,27 @@ export function createReservation(payload: {
     body: JSON.stringify(payload),
   });
 }
+
+export class ReservationService {
+  static async getSummary(id: string) {
+    return apiFetch<{
+      success: boolean;
+      data: {
+        id: string;
+        status: string;
+        date: string;
+        start_time: string;
+        end_time?: string;
+        total?: number;
+        location?: string;
+        payment_method?: string;
+        class: { name: string };
+        court?: { name: string };
+      };
+    }>(`/booking/summary/${id}`, {
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
+    }).then((res) => res.data);
+  }
+}

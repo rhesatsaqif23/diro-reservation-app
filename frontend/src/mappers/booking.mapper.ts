@@ -19,5 +19,14 @@ export function mapBookingSummaryDTO(dto: BookingSummaryDTO): BookingSummary {
       id: dto.court.id,
       name: dto.court.name,
     },
+
+    user: {
+      name: dto.user.name,
+      email: dto.user.email,
+    },
+
+    base_price: dto.base_price,
+    admin_fee: dto.admin_fee,
+    total: dto.total,
   };
 }

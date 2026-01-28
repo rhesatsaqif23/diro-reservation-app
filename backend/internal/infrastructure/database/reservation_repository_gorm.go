@@ -71,3 +71,10 @@ func (r *reservationRepository) FindByIDWithPreload(
 
 	return &reservation, nil
 }
+
+func (r *reservationRepository) UpdateStatus(id string, status model.ReservationStatus) error {
+	return r.db.Model(&model.Reservation{}).
+		Where("id = ?", id).
+		Update("status", status).
+		Error
+}

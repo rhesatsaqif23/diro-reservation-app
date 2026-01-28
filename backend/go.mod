@@ -13,6 +13,11 @@ require (
 require github.com/google/uuid v1.6.0
 
 require (
+	github.com/midtrans/midtrans-go v1.3.8 // indirect
+	github.com/veritrans/go-midtrans v0.0.0-20210616100512-16326c5eeb00 // indirect
+)
+
+require (
 	github.com/bytedance/gopkg v0.1.3 // indirect
 	github.com/bytedance/sonic v1.15.0 // indirect
 	github.com/bytedance/sonic/loader v0.5.0 // indirect

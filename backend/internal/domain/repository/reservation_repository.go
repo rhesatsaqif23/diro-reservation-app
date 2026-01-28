@@ -12,4 +12,5 @@ type ReservationRepository interface {
 	FindByUserID(userID string) ([]model.Reservation, error)
 	IsSlotReserved(courtID string, date time.Time, startTime string) (bool, error)
 	FindByIDWithPreload(id string) (*model.Reservation, error)
+	UpdateStatus(id string, status model.ReservationStatus) error
 }

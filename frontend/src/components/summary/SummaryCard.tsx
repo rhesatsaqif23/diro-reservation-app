@@ -31,7 +31,12 @@ export default function SummaryCard({ summary }: Props) {
 
       <BookingDetails summary={summary} />
       <PricingSection summary={summary} />
-      <PaymentInfo reservationId={summary.id} />
+      <PaymentInfo
+        reservationId={summary.id}
+        amount={summary.base_price}
+        email={summary.user.email}
+        name={summary.user.name}
+      />
     </div>
   );
 }

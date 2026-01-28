@@ -12,6 +12,7 @@ interface BookingSummaryCardProps {
   amount?: string;
   onConfirm?: () => void;
   isAuthenticated: boolean;
+  isProcessing?: boolean; // ADD
 }
 
 export function BookingSummaryCard({
@@ -21,6 +22,7 @@ export function BookingSummaryCard({
   amount,
   onConfirm,
   isAuthenticated,
+  isProcessing,
 }: BookingSummaryCardProps) {
   if (!date || !timeslot || !court) return null; // hide if incomplete
 
@@ -78,11 +80,15 @@ export function BookingSummaryCard({
         </div>
 
         <button
-          disabled={!isAuthenticated}
+          disabled={!isAuthenticated || isProcessing}
           onClick={onConfirm}
           className="flex items-center justify-center gap-2 px-10 h-14 bg-primary hover:bg-primary/90 rounded-2xl text-white font-bold transition-transform active:scale-95 shadow-xl shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isAuthenticated ? "Confirm Booking" : "Login to Continue"}
+          {isProcessing
+            ? "Processing..."
+            : isAuthenticated
+              ? "Confirm Booking"
+              : "Login to Continue"}
           <ArrowRight className="w-5 h-5" />
         </button>
       </div>

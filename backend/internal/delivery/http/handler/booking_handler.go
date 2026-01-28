@@ -115,7 +115,6 @@ func (h *BookingHandler) GetSummary(c *gin.Context) {
 		return
 	}
 
-	// Parse start_time dari DB (HH:mm:ss)
 	start, err := time.Parse("15:04:05", reservation.StartTime)
 	if err != nil {
 		response.Error(c, 500, "invalid start time format", nil)
@@ -125,10 +124,14 @@ func (h *BookingHandler) GetSummary(c *gin.Context) {
 	duration := reservation.Class.DurationMinutes
 	end := start.Add(time.Minute * time.Duration(duration))
 
+	base := reservation.Class.Price
+	admin := int(float64(base) * 0.05)
+	total := base + admin
+
 	response.OK(c, "Booking summary", gin.H{
 		"id":         reservation.ID,
 		"date":       reservation.Date.Format("2006-01-02"),
-		"start_time": start.Format("15:04"), // FE-friendly
+		"start_time": start.Format("15:04"),
 		"end_time":   end.Format("15:04"),
 		"status":     reservation.Status,
 
@@ -142,5 +145,15 @@ func (h *BookingHandler) GetSummary(c *gin.Context) {
 			"id":   reservation.Court.ID,
 			"name": reservation.Court.Name,
 		},
+
+		"user": gin.H{
+			"name":  reservation.User.Name,
+			"email": reservation.User.Email,
+		},
+
+		"base_price": base,
+		"admin_fee":  admin,
+		"total":      total,
 	})
+
 }

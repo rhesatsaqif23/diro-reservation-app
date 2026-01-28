@@ -23,6 +23,7 @@ export default function BookingPage() {
   const searchParams = useSearchParams();
   const classId = searchParams.get("classId");
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // DATA
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
@@ -134,6 +135,8 @@ export default function BookingPage() {
 
   // CONFIRM
   const handleConfirmBooking = async () => {
+    if (isProcessing) return; // prevent double
+
     if (!isAuthenticated) {
       alert("Silakan login terlebih dahulu");
       return;
@@ -141,6 +144,8 @@ export default function BookingPage() {
 
     if (!classId || !selectedDate || !selectedTimeslot || !selectedCourt)
       return;
+
+    setIsProcessing(true);
 
     try {
       const res = await BookingService.createDraft({
@@ -154,6 +159,8 @@ export default function BookingPage() {
     } catch (err) {
       console.error(err);
       alert("Gagal membuat booking. Silakan coba lagi.");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -206,6 +213,7 @@ export default function BookingPage() {
         }
         onConfirm={handleConfirmBooking}
         isAuthenticated={isAuthenticated}
+        isProcessing={isProcessing}
       />
     </section>
   );

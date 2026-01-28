@@ -15,6 +15,8 @@ export default function SummaryPage() {
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<BookingSummary | null>(null);
 
+  console.log("summary =>", summary);
+
   useEffect(() => {
     if (!id) return;
 

@@ -55,6 +55,11 @@ func NewRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 		availabilityRepo,
 		reservationRepo,
 	)
+	paymentUsecase := usecase.NewPaymentUsecase(
+		reservationRepo,
+		cfg.Midtrans.ServerKey,
+		cfg.Midtrans.IsProduction,
+	)
 
 	// Handlers
 	classHandler := handler.NewClassHandler(classUsecase)
@@ -63,6 +68,7 @@ func NewRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	availabilityHandler := handler.NewAvailabilityHandler(availabilityUsecase)
 	reservationHandler := handler.NewReservationHandler(reservationUsecase)
 	bookingHandler := handler.NewBookingHandler(bookingUsecase)
+	paymentHandler := handler.NewPaymentHandler(paymentUsecase)
 
 	// ROUTES
 	v1 := router.Group("/v1")
@@ -84,6 +90,9 @@ func NewRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 
 		v1.GET("/booking/dates", bookingHandler.GetAvailableDates)
 		v1.GET("/booking/timeslots", bookingHandler.GetAvailableTimeslots)
+
+		v1.POST("/payment/token", paymentHandler.CreateSnapToken)
+		v1.POST("/payment/notification", paymentHandler.HandleNotification)
 
 		// Protected
 		protected := v1.Group("/")

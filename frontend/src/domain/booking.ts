@@ -5,8 +5,6 @@ export interface BookingSummary {
   end_time: string;
   status: string;
 
-  admin_fee?: number;
-
   class: {
     id: string;
     name: string;
@@ -17,4 +15,13 @@ export interface BookingSummary {
     id: string;
     name: string;
   };
+
+  user: {
+    name: string;
+    email: string;
+  };
+
+  base_price: number;
+  admin_fee: number;
+  total: number;
 }

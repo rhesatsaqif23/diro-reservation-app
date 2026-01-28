@@ -7,6 +7,7 @@ type ReservationStatus string
 const (
 	ReservationPending   ReservationStatus = "PENDING"
 	ReservationPaid      ReservationStatus = "PAID"
+	ReservationExpired   ReservationStatus = "EXPIRED"
 	ReservationCancelled ReservationStatus = "CANCELLED"
 )
 
