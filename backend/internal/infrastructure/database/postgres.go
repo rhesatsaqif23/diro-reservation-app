@@ -3,6 +3,8 @@ package database
 import (
 	"fmt"
 	"log"
+	"os"
+	"time"
 
 	"github.com/rhesatsaqif23/diro-reservation-app/backend/internal/config"
 
@@ -12,25 +14,19 @@ import (
 )
 
 func InitDB(cfg *config.Config) (*gorm.DB, error) {
-	// Build connection string
-	dsn := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=Asia/Jakarta",
-		cfg.Database.Host,
-		cfg.Database.User,
-		cfg.Database.Password,
-		cfg.Database.DBName,
-		cfg.Database.Port,
-		cfg.Database.SSLMode,
-	)
+	// Prioritize DATABASE_URL from env (Vercel standard), fallback to config struct (Local)
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		dsn = fmt.Sprintf(
+			"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=Asia/Jakarta",
+			cfg.Database.Host, cfg.Database.User, cfg.Database.Password, cfg.Database.DBName, cfg.Database.Port, cfg.Database.SSLMode,
+		)
+	}
 
-	// Set GORM config
-	gormConfig := &gorm.Config{}
-
-	// Set logger based on environment
+	// Set GORM logger
+	gormConfig := &gorm.Config{Logger: logger.Default.LogMode(logger.Error)}
 	if cfg.Server.Env == "development" {
 		gormConfig.Logger = logger.Default.LogMode(logger.Info)
-	} else {
-		gormConfig.Logger = logger.Default.LogMode(logger.Error)
 	}
 
 	// Connect to database
@@ -45,16 +41,17 @@ func InitDB(cfg *config.Config) (*gorm.DB, error) {
 		return nil, fmt.Errorf("failed to get database instance: %w", err)
 	}
 
-	// Set connection pool settings
-	sqlDB.SetMaxIdleConns(10)
-	sqlDB.SetMaxOpenConns(100)
+	// Serverless Optimization: Strict limits to prevent connection exhaustion
+	sqlDB.SetMaxOpenConns(1)                  // Limit to 1 connection per function instance
+	sqlDB.SetMaxIdleConns(1)                  // Keep max 1 idle connection
+	sqlDB.SetConnMaxLifetime(5 * time.Minute) // Recycle connections frequently
 
 	// Test connection
 	if err := sqlDB.Ping(); err != nil {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	log.Println("✓ Database connection pool configured")
+	log.Println("✓ Database connected (Serverless Optimized)")
 
 	return db, nil
 }
