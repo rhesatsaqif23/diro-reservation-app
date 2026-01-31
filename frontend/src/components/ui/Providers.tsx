@@ -10,14 +10,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
     setMounted(true);
   }, []);
 
-  // Casting ke ElementType untuk menghindari error TS pada 'children'
-  const Provider = NextThemesProvider as React.ElementType;
-
-  if (!mounted) return <>{children}</>;
+  if (!mounted) {
+    return <>{children}</>;
+  }
 
   return (
-    <Provider attribute="class" defaultTheme="system" enableSystem>
+    <NextThemesProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
       {children}
-    </Provider>
+    </NextThemesProvider>
   );
 }
