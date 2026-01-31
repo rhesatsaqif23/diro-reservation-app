@@ -22,9 +22,12 @@ func NewRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 
 	// CORS
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     cfg.Server.AllowedOrigins,
+		AllowOrigins: []string{
+			"http://localhost:3000",
+			"https://zenpilates-web.vercel.app", // Domain utama
+		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Accept"},
 		AllowCredentials: true,
 	}))
 
