@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 
 import { Court } from "@/src/domain/court";
 import { TimeslotAvailability } from "@/src/domain/timeslot";
@@ -14,11 +14,26 @@ import { BookingSummaryCard } from "@/src/components/booking/BookingSummary";
 
 import { ClassService } from "@/src/services/class.service";
 import { BookingService } from "@/src/services/booking.service";
-import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/src/store/auth.store";
 import { CourtService } from "@/src/services/court.service";
 
+// Komponen Utama: Membungkus konten dengan Suspense untuk validasi build Next.js
 export default function BookingPage() {
+  return (
+    <Suspense
+      fallback={
+        <section className="container-page py-10">
+          Loading booking form...
+        </section>
+      }
+    >
+      <BookingContent />
+    </Suspense>
+  );
+}
+
+// Komponen Konten: Berisi seluruh logika form pemesanan
+function BookingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const classId = searchParams.get("classId");
@@ -31,13 +46,13 @@ export default function BookingPage() {
   const [timeslots, setTimeslots] = useState<TimeslotAvailability[]>([]);
   const [courts, setCourts] = useState<Court[]>([]);
 
-  // SELECTION (SINGLE SOURCE OF TRUTH)
+  // SELECTION
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTimeslot, setSelectedTimeslot] =
     useState<TimeslotAvailability | null>(null);
   const [selectedCourt, setSelectedCourt] = useState<Court | null>(null);
 
-  // LOADING STATE (PER SECTION)
+  // LOADING STATE
   const [loadingDates, setLoadingDates] = useState(true);
   const [loadingTimeslots, setLoadingTimeslots] = useState(true);
   const [loadingCourts, setLoadingCourts] = useState(true);
@@ -50,12 +65,10 @@ export default function BookingPage() {
     ClassService.getByID(classId).then(setSelectedClass);
   }, [classId]);
 
-  // FETCH DATES (INIT)
+  // FETCH DATES
   useEffect(() => {
     if (!classId) return;
-
     let cancelled = false;
-
     (async () => {
       setLoadingDates(true);
       try {
@@ -68,23 +81,19 @@ export default function BookingPage() {
         if (!cancelled) setLoadingDates(false);
       }
     })();
-
     return () => {
       cancelled = true;
     };
   }, [classId]);
 
-  // FETCH TIMESLOTS (BASED ON selectedDate)
+  // FETCH TIMESLOTS
   useEffect(() => {
     if (!classId || !selectedDate) return;
-
     let cancelled = false;
-
     (async () => {
       setLoadingTimeslots(true);
       setSelectedTimeslot(null);
       setCourts([]);
-
       try {
         const res = await BookingService.getAvailableTimeslots(
           classId,
@@ -98,18 +107,15 @@ export default function BookingPage() {
         if (!cancelled) setLoadingTimeslots(false);
       }
     })();
-
     return () => {
       cancelled = true;
     };
   }, [classId, selectedDate]);
 
-  // FETCH COURTS (BASED ON selectedDate + selectedTimeslot)
+  // FETCH COURTS
   useEffect(() => {
     if (!selectedDate || !selectedTimeslot || !requiredCourtType) return;
-
     let cancelled = false;
-
     (async () => {
       setLoadingCourts(true);
       try {
@@ -118,7 +124,6 @@ export default function BookingPage() {
           selectedTimeslot.start_time,
           requiredCourtType,
         );
-
         if (!cancelled) {
           setCourts(res);
           setSelectedCourt(null);
@@ -127,7 +132,6 @@ export default function BookingPage() {
         if (!cancelled) setLoadingCourts(false);
       }
     })();
-
     return () => {
       cancelled = true;
     };
@@ -135,18 +139,15 @@ export default function BookingPage() {
 
   // CONFIRM
   const handleConfirmBooking = async () => {
-    if (isProcessing) return; // prevent double
-
+    if (isProcessing) return;
     if (!isAuthenticated) {
       alert("Silakan login terlebih dahulu");
       return;
     }
-
     if (!classId || !selectedDate || !selectedTimeslot || !selectedCourt)
       return;
 
     setIsProcessing(true);
-
     try {
       const res = await BookingService.createDraft({
         class_id: classId,
@@ -154,7 +155,6 @@ export default function BookingPage() {
         date: selectedDate,
         start_time: selectedTimeslot.start_time,
       });
-
       router.push(`/booking/summary/${res.data.reservation_id}`);
     } catch (err) {
       console.error(err);
@@ -184,7 +184,6 @@ export default function BookingPage() {
           setSelectedCourt(null);
         }}
       />
-
       <SelectTimeslot
         timeslots={timeslots}
         selected={selectedTimeslot}
@@ -194,14 +193,12 @@ export default function BookingPage() {
           setSelectedCourt(null);
         }}
       />
-
       <SelectCourt
         courts={courts}
         selected={selectedCourt}
         loading={loadingCourts}
         onChange={setSelectedCourt}
       />
-
       <BookingSummaryCard
         date={selectedDate}
         timeslot={selectedTimeslot}
