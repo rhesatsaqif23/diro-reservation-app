@@ -4,9 +4,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/rhesatsaqif23/diro-reservation-app/backend/internal/config"
-	"github.com/rhesatsaqif23/diro-reservation-app/backend/internal/delivery/http"
-	"github.com/rhesatsaqif23/diro-reservation-app/backend/internal/infrastructure/database"
+	"github.com/rhesatsaqif23/diro-reservation-app/backend/core/config"
+	"github.com/rhesatsaqif23/diro-reservation-app/backend/core/delivery/http"
+	"github.com/rhesatsaqif23/diro-reservation-app/backend/core/infrastructure/database"
 
 	"github.com/joho/godotenv"
 )

@@ -6,9 +6,9 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
-	"github.com/rhesatsaqif23/diro-reservation-app/backend/internal/config"
-	httpDelivery "github.com/rhesatsaqif23/diro-reservation-app/backend/internal/delivery/http"
-	"github.com/rhesatsaqif23/diro-reservation-app/backend/internal/infrastructure/database"
+	"github.com/rhesatsaqif23/diro-reservation-app/backend/core/config"
+	httpDelivery "github.com/rhesatsaqif23/diro-reservation-app/backend/core/delivery/http"
+	"github.com/rhesatsaqif23/diro-reservation-app/backend/core/infrastructure/database"
 )
 
 var (

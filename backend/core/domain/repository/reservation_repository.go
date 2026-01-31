@@ -1,0 +1,16 @@
+package repository
+
+import (
+	"time"
+
+	"github.com/rhesatsaqif23/diro-reservation-app/backend/core/domain/model"
+)
+
+// Contract database reservation
+type ReservationRepository interface {
+	Create(reservation *model.Reservation) error
+	FindByUserID(userID string) ([]model.Reservation, error)
+	IsSlotReserved(courtID string, date time.Time, startTime string) (bool, error)
+	FindByIDWithPreload(id string) (*model.Reservation, error)
+	UpdateStatus(id string, status model.ReservationStatus) error
+}
