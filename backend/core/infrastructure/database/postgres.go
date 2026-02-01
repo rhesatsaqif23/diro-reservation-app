@@ -24,7 +24,12 @@ func InitDB(cfg *config.Config) (*gorm.DB, error) {
 	}
 
 	// Set GORM logger
-	gormConfig := &gorm.Config{Logger: logger.Default.LogMode(logger.Error)}
+	gormConfig := &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Error),
+		// PENTING: Matikan PrepareStmt untuk menghindari error "stmtcache" di Vercel/Supabase
+		PrepareStmt: false,
+	}
+
 	if cfg.Server.Env == "development" {
 		gormConfig.Logger = logger.Default.LogMode(logger.Info)
 	}
