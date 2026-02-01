@@ -14,7 +14,6 @@ import (
 )
 
 func InitDB(cfg *config.Config) (*gorm.DB, error) {
-	// Prioritize DATABASE_URL from env (Vercel standard), fallback to config struct (Local)
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
 		dsn = fmt.Sprintf(
@@ -23,10 +22,9 @@ func InitDB(cfg *config.Config) (*gorm.DB, error) {
 		)
 	}
 
-	// Set GORM logger
 	gormConfig := &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Error),
-		// PENTING: Matikan PrepareStmt untuk menghindari error "stmtcache" di Vercel/Supabase
+		// 1. Matikan cache internal GORM (Double check)
 		PrepareStmt: false,
 	}
 
@@ -34,29 +32,30 @@ func InitDB(cfg *config.Config) (*gorm.DB, error) {
 		gormConfig.Logger = logger.Default.LogMode(logger.Info)
 	}
 
-	// Connect to database
-	db, err := gorm.Open(postgres.Open(dsn), gormConfig)
+	// 2. Gunakan postgres.New untuk konfigurasi yang lebih detail
+	db, err := gorm.Open(postgres.New(postgres.Config{
+		DSN:                  dsn,
+		PreferSimpleProtocol: true,
+	}), gormConfig)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	// Get underlying SQL DB for connection pool settings
 	sqlDB, err := db.DB()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get database instance: %w", err)
 	}
 
-	// Serverless Optimization: Strict limits to prevent connection exhaustion
-	sqlDB.SetMaxOpenConns(1)                  // Limit to 1 connection per function instance
-	sqlDB.SetMaxIdleConns(1)                  // Keep max 1 idle connection
-	sqlDB.SetConnMaxLifetime(5 * time.Minute) // Recycle connections frequently
+	// Pool settings tetap diperlukan untuk Serverless
+	sqlDB.SetMaxOpenConns(1)
+	sqlDB.SetMaxIdleConns(1)
+	sqlDB.SetConnMaxLifetime(1 * time.Minute) // Perkecil lifetime agar koneksi tidak menggantung
 
-	// Test connection
 	if err := sqlDB.Ping(); err != nil {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	log.Println("✓ Database connected (Serverless Optimized)")
-
+	log.Println("✓ Database connected (Simple Protocol & Serverless Optimized)")
 	return db, nil
 }

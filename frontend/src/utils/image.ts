@@ -6,10 +6,6 @@ export function resolveStorageImage(url?: string | null): string {
   if (!url) return FALLBACK_IMAGE;
   if (url.startsWith("http")) return url;
 
-  // Log untuk cek di console browser (tekan F12)
-  console.log("Storage Base:", storageBase);
-  console.log("Image Path:", url);
-
   if (!storageBase) return FALLBACK_IMAGE;
   return `${storageBase}/${url}`;
 }
